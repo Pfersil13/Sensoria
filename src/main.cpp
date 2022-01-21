@@ -44,8 +44,7 @@ void setup() {
 sgtl5000_1.enable();
 sgtl5000_1.volume(0); 
 sgtl5000_1.inputSelect(myInput);
-//sine1.amplitude(1);
-//sine1.frequency(20000);
+
 AudioMemory(60); 
 Serial.begin(115200);
 
