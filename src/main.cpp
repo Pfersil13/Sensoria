@@ -17,7 +17,7 @@ AudioInputI2S            i2s2;           //xy=249.1999969482422,245.199996948242
 AudioRecordQueue         queue1;         //xy=414.1999969482422,243.1999969482422
 AudioOutputI2S           i2s1;           //xy=426.20001220703125,156.1999969482422
 AudioConnection          patchCord1(sine1, 0, i2s1, 0);
-AudioConnection          patchCord2(sine1, 0, i2s1, 1);
+//AudioConnection          patchCord2(sine1, 0, i2s1, 1);
 AudioConnection          patchCord3(i2s2, 1, queue1, 0);
 // GUItool: end automatically generated codeated code
 
@@ -30,22 +30,31 @@ void startRecording();
 void continueRecording();
 void stopRecording();
 // which input on the audio shield will be used?
-const int myInput = AUDIO_INPUT_LINEIN;
-//const int myInput = AUDIO_INPUT_MIC;
+//const int myInput = AUDIO_INPUT_LINEIN;
+const int myInput = AUDIO_INPUT_MIC;
 
 // Remember which mode we're doing
 int mode = 0;  // 0=stopped, 1=recording, 2=playing
+unsigned long previousMillis = 0;        // will store last time LED was updated
 
+// constants won't change:
+const long interval = 1000;           // interval at which to blink (milliseconds)
 // The file where data is recorded
 File frec;
 
 
 void setup() {
 sgtl5000_1.enable();
+sgtl5000_1.dacVolume(1);
 sgtl5000_1.volume(0); 
 sgtl5000_1.inputSelect(myInput);
-
-AudioMemory(60); 
+sgtl5000_1.micGain(20);
+sgtl5000_1.adcHighPassFilterDisable();
+sgtl5000_1.unmuteHeadphone();
+sgtl5000_1.muteLineout();
+sgtl5000_1.audioProcessorDisable();
+//sgtl5000_1.lineOutLevel(13);
+AudioMemory(120); 
 Serial.begin(115200);
 
 SPI.setMOSI(SDCARD_MOSI_PIN);
@@ -58,25 +67,41 @@ SPI.setMOSI(SDCARD_MOSI_PIN);
     }}
 
 mode = 0;
-delay(1000);
-sine1.amplitude(1);
-sine1.frequency(15000);
+
 }
 
 void loop() {
 
-sine1.amplitude(1);
-sine1.frequency(15000);
+//sine1.amplitude(1);
+//sine1.frequency(15000);
+
 
 if (mode == 0){
   startRecording();
+  sine1.amplitude(1);
+  sine1.frequency(1);
 }
+for(int i = 0; i<20000; i = i +1000){
+    
+
+  while(millis() - previousMillis <= interval){
+      
+
 if (mode == 1) {
     continueRecording();
+  }}
+previousMillis = millis();
+  sine1.frequency(i);
+  Serial.println(i);
   }
+
+
   if (millis() > 35000){
 Serial.print("Done");
 stopRecording();
+//sine1.amplitude(0);
+//sine1.frequency(50);
+
   }
 
 }
