@@ -1,166 +1,29 @@
 #include <Arduino.h>
 
-#include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
-
-// Use these with the Teensy Audio Shield
-#define SDCARD_CS_PIN    10
-#define SDCARD_MOSI_PIN  7
-#define SDCARD_SCK_PIN   14
-
-// GUItool: begin automatically generated code
-AudioSynthWaveformSine   sine1;          //xy=247.20001220703125,150.1999969482422
-AudioInputI2S            i2s2;           //xy=249.1999969482422,245.1999969482422
-AudioRecordQueue         queue1;         //xy=414.1999969482422,243.1999969482422
-AudioOutputI2S           i2s1;           //xy=426.20001220703125,156.1999969482422
-AudioConnection          patchCord1(sine1, 0, i2s1, 0);
-//AudioConnection          patchCord2(sine1, 0, i2s1, 1);
-AudioConnection          patchCord3(i2s2, 1, queue1, 0);
-// GUItool: end automatically generated codeated code
-
-
-
-AudioControlSGTL5000     sgtl5000_1; 
-// GUItool: end automatically generated code
-void pulseTrain(float Vmin, float Vmax, float deltaV, float basalTime, float frecTime, float frec);
-void startRecording();
-void continueRecording();
-void stopRecording();
-// which input on the audio shield will be used?
-//const int myInput = AUDIO_INPUT_LINEIN;
-const int myInput = AUDIO_INPUT_MIC;
+#include <Mic.h>
 
 // Remember which mode we're doing
 int mode = 0;  // 0=stopped, 1=recording, 2=playing
-unsigned long previousMillis = 0;        // will store last time LED was updated
+const int Button_1 = 32;
+bool state = 0;
 
-// constants won't change:
-const long interval = 1000;           // interval at which to blink (milliseconds)
-// The file where data is recorded
-File frec;
+void ISR(){
 
-
+stopRecording();
+delay(5000);
+}
 void setup() {
-sgtl5000_1.enable();
-sgtl5000_1.dacVolume(1);
-sgtl5000_1.volume(0); 
-sgtl5000_1.inputSelect(myInput);
-sgtl5000_1.micGain(20);
-sgtl5000_1.adcHighPassFilterDisable();
-sgtl5000_1.unmuteHeadphone();
-sgtl5000_1.muteLineout();
-sgtl5000_1.audioProcessorDisable();
-//sgtl5000_1.lineOutLevel(13);
-AudioMemory(120); 
+  setupAudio();
+  setUpSD();
+  pinMode(Button_1, INPUT_PULLUP);
 Serial.begin(115200);
-
-SPI.setMOSI(SDCARD_MOSI_PIN);
-  SPI.setSCK(SDCARD_SCK_PIN);
-  if (!(SD.begin(SDCARD_CS_PIN))) {
-    // stop here if no SD card, but print a message
-    while (1) {
-      Serial.println("Unable to access the SD card");
-      delay(500);
-    }}
-
+attachInterrupt(digitalPinToInterrupt(Button_1), ISR, RISING);
 mode = 0;
-
+pulseTrain( 0.05, 10000, 10000, 1000);
 }
 
 void loop() {
+Serial.println(".");
 
-//sine1.amplitude(1);
-//sine1.frequency(15000);
-
-
-if (mode == 0){
-  startRecording();
-  sine1.amplitude(1);
-  sine1.frequency(1);
-}
-for(int i = 0; i<20000; i = i +1000){
-    
-
-  while(millis() - previousMillis <= interval){
-      
-
-if (mode == 1) {
-    continueRecording();
-  }}
-previousMillis = millis();
-  sine1.frequency(i);
-  Serial.println(i);
-  }
-
-
-  if (millis() > 35000){
-Serial.print("Done");
-stopRecording();
-//sine1.amplitude(0);
-//sine1.frequency(50);
-
-  }
-
-}
-
-
-void startRecording() {
-  Serial.println("startRecording");
-  if (SD.exists("RECORD.RAW")) {
-    // The SD library writes new data to the end of the
-    // file, so to start a new recording, the old file
-    // must be deleted before new data is written.
-    SD.remove("RECORD.RAW");
-  }
-  frec = SD.open("RECORD.RAW", FILE_WRITE);
-  if (frec) {
-    queue1.begin();
-    mode = 1;
-  }
-}
-
-void continueRecording() {
-  if (queue1.available() >= 2) {
-    byte buffer[512];
-    // Fetch 2 blocks from the audio library and copy
-    // into a 512 byte buffer.  The Arduino SD library
-    // is most efficient when full 512 byte sector size
-    // writes are used.
-    memcpy(buffer, queue1.readBuffer(), 256);
-    queue1.freeBuffer();
-    memcpy(buffer+256, queue1.readBuffer(), 256);
-    queue1.freeBuffer();
-    // write all 512 bytes to the SD card
-    //elapsedMicros usec = 0;
-    frec.write(buffer, 512);
-    // Uncomment these lines to see how long SD writes
-    // are taking.  A pair of audio blocks arrives every
-    // 5802 microseconds, so hopefully most of the writes
-    // take well under 5802 us.  Some will take more, as
-    // the SD library also must write to the FAT tables
-    // and the SD card controller manages media erase and
-    // wear leveling.  The queue1 object can buffer
-    // approximately 301700 us of audio, to allow time
-    // for occasional high SD card latency, as long as
-    // the average write time is under 5802 us.
-    //Serial.print("SD write, us=");
-    //Serial.println(usec);
-  }
-}
-
-void stopRecording() {
-  Serial.println("stopRecording");
-  queue1.end();
-  if (mode == 1) {
-    while (queue1.available() > 0) {
-      frec.write((byte*)queue1.readBuffer(), 256);
-      queue1.freeBuffer();
-    }
-    frec.close();
-  }
-  mode = -2;
 }
 
