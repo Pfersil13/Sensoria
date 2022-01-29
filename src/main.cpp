@@ -31,7 +31,6 @@ if(pulseState == 0){
 float audible = pulseTrain( 0.1, 1000, 1000, 1000);
 Serial.print("Gain: ");
 Serial.println(audible);
-//stopRecording();
 rebote(audible, 3000, 500, 5000, 1000);
 }
 }

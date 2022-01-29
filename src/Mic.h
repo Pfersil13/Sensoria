@@ -17,9 +17,10 @@
         void stopRecording();
 
 
-        void pulseTrain( float deltaG, float basalTime, float frecTime, float frequency);
-
+        float pulseTrain( float deltaG, unsigned long basalTime, unsigned long frecTime, float frequency);
+        void rebote(float gain, float ecoTime, float pulseTime,float secondEcoTime, float frequency);
 
         extern int mode;
         extern bool state;
+        extern bool pulseState;
 #endif
