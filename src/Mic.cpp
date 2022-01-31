@@ -36,7 +36,7 @@ sgtl5000_1.enable();
 sgtl5000_1.dacVolume(1);
 sgtl5000_1.volume(0.8); 
 sgtl5000_1.inputSelect(myInput);
-sgtl5000_1.micGain(3);
+sgtl5000_1.micGain(0);
 sgtl5000_1.adcHighPassFilterDisable();
 sgtl5000_1.muteHeadphone();
 sgtl5000_1.muteLineout();
@@ -60,15 +60,15 @@ void setUpSD(){
 
 
 
-void startRecording() {
+void startRecording(char* name) {
   Serial.println("startRecording");
-  if (SD.exists("RECORD.RAW")) {
+  if (SD.exists(name)) {
     // The SD library writes new data to the end of the
     // file, so to start a new recording, the old file
     // must be deleted before new data is written.
-    SD.remove("RECORD.RAW");
+    SD.remove(name);
   }
-  frec = SD.open("RECORD.RAW", FILE_WRITE);
+  frec = SD.open(name, FILE_WRITE);
   if (frec) {
     queue1.begin();
     mode = 1;
@@ -123,13 +123,13 @@ void stopRecording() {
 
 
 
-float pulseTrain( float deltaG, unsigned long basalTime, unsigned long frecTime, float frequency){
+float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency , char* fileName){
   
     unsigned long previousFrec = 0;        // will store last time LED was updated
     unsigned long previousBasal = 0;
     gain = 0;
     sgtl5000_1.muteHeadphone();   //Mutea la salida
-    startRecording();             //Empieza a grabar
+    startRecording(fileName);             //Empieza a grabar
     sine1.amplitude(0);           //Establece la amplitud de la senoidal 
     sine1.frequency(frequency);   //Establece la frecuencia de la senoidal 
     sgtl5000_1.volume(0);      //Declara la ganacia de la salida
@@ -219,3 +219,69 @@ while (state_2 == 1)
 
 
 }
+
+void frecSweep(bool speaker,int nFrec){
+  int frequency;
+  char name[30];
+  for(int i = 0; i <= nFrec; i++){
+
+    switch (i)
+    {
+    case 0:
+      frequency = Frec_1;
+      break;
+    case 1:
+      frequency = Frec_2;
+      break;
+    case 2:
+      frequency = Frec_3;
+      break;
+    case 3:
+      frequency = Frec_4;
+      break;
+    case 4:
+      frequency = Frec_5;
+      break;
+    case 5:
+      frequency = Frec_6;
+      break;
+    case 6:
+      frequency = Frec_7;
+      break;
+    case 7:
+      frequency = Frec_8;
+      break;
+    case 8:
+      frequency = Frec_9;
+      break;
+    case 9:
+      frequency = Frec_10;
+      break;
+    default:
+    frequency = 0;
+      break;
+    }
+  Serial.println(frequency);
+  String fileName = createFile(speaker, frequency);
+  fileName.toCharArray(name,fileName.length()+1);
+  Serial.println(name);
+  float audible = pulseTrain( 0.1, basalT, frecT, frequency ,name);
+  Serial.print("Gain: ");
+  Serial.println(audible);
+  rebote(audible, ecoT, pulseT, secondEcoT, frequency);
+  }
+  Serial.println("The END");
+}
+
+String createFile(bool speaker, int frec){
+  String channel = "0";
+  if (speaker  == 0)
+  channel = "R";
+    else 
+  channel = "L";
+
+  String mergedTopic = String("RECORD_") + channel + String("_") + String(frec) + String(".RAW") ;
+  
+  return mergedTopic;
+}
+

@@ -21,6 +21,7 @@ void setup() {
 Serial.begin(115200);
 attachInterrupt(digitalPinToInterrupt(Button_1), ISR, RISING);
 attachInterrupt(digitalPinToInterrupt(Button_2), ISR_2, RISING);
+
 //float audible = pulseTrain( 0.1, 1000, 1000, 1000);
 
 
@@ -28,10 +29,7 @@ attachInterrupt(digitalPinToInterrupt(Button_2), ISR_2, RISING);
 
 void loop() {
 if(pulseState == 0){
-float audible = pulseTrain( 0.1, 1000, 1000, 1000);
-Serial.print("Gain: ");
-Serial.println(audible);
-rebote(audible, 3000, 500, 5000, 1000);
-}
-}
+frecSweep(1,2);
+}}
+
 
