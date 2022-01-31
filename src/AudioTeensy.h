@@ -1,5 +1,5 @@
-#ifndef MIC_H
-    #define MIC_H
+#ifndef AUDIOTEENSY_H
+    #define AUDIOTEENSY_H
         
         #include <Arduino.h>
        
@@ -9,9 +9,9 @@
         #define SDCARD_SCK_PIN   13  
         
         #define Frec_1  1000
-        #define Frec_2  2000
-        #define Frec_3  3000
-        #define Frec_4  4000
+        #define Frec_2  5000
+        #define Frec_3  10000
+        #define Frec_4  15000
         #define Frec_5  5000
         #define Frec_6  6000
         #define Frec_7  7000
@@ -39,11 +39,14 @@
         void stopRecording();
 
 
-        float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency, char* fileName);
-        void rebote(float gain, float ecoTime, float pulseTime,float secondEcoTime, float frequency);
-        void frecSweep(bool speaker,int nFrec);
+        float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency, char* fileName, bool channel);
+        void rebote(float gain, float ecoTime, float pulseTime,float secondEcoTime, float frequency, bool channel);
+        void frecSweep(bool channel,int nFrec);
 
-        String createFile(bool speaker, int frec);
+        String createFile(bool channel, int frec);
+        void SineAmplitude(bool channel, float state );
+        void SineFrequency(bool channel, int frec);
+        void startCycle(int nFrec);
 
         extern int mode;
         extern bool state;

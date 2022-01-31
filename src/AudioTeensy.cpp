@@ -1,4 +1,4 @@
-#include <Mic.h>
+#include <AudioTeensy.h>
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -19,15 +19,15 @@ const int myInput = AUDIO_INPUT_MIC;
         // constants won't change:
     
 // GUItool: begin automatically generated code
-AudioSynthWaveformSine   sine1;          //xy=247.20001220703125,150.1999969482422
+AudioSynthWaveformSine   sineLeft;          //xy=247.20001220703125,150.1999969482422
+AudioSynthWaveformSine   sineRight;          //xy=248.1999969482422,191.1999969482422
 AudioInputI2S            i2s2;           //xy=249.1999969482422,245.1999969482422
 AudioRecordQueue         queue1;         //xy=414.1999969482422,243.1999969482422
 AudioOutputI2S           i2s1;           //xy=426.20001220703125,156.1999969482422
-AudioConnection          patchCord1(sine1, 0, i2s1, 0);
-//AudioConnection          patchCord2(sine1, 0, i2s1, 1);
+AudioConnection          patchCord1(sineLeft, 0, i2s1, 0);
+AudioConnection          patchCord2(sineRight, 0, i2s1, 1);
 AudioConnection          patchCord3(i2s2, 1, queue1, 0);
-// GUItool: end automatically generated codeated code
-AudioControlSGTL5000     sgtl5000_1; 
+AudioControlSGTL5000     sgtl5000_1;     //xy=288.1999969482422,384.1999969482422
 // GUItool: end automatically generated code
 
 void setupAudio(){
@@ -40,8 +40,8 @@ sgtl5000_1.micGain(0);
 sgtl5000_1.adcHighPassFilterDisable();
 sgtl5000_1.muteHeadphone();
 sgtl5000_1.muteLineout();
-//sine1.amplitude(1);
-//sine1.frequency(1000);
+sineLeft.amplitude(0);
+sineRight.amplitude(0);
 //sgtl5000_1.lineOutLevel(13);
 AudioMemory(200); 
 
@@ -121,17 +121,19 @@ void stopRecording() {
 
 
 
+//Esta función se encarga de generar el tren de pulsos para determinar la ganancia del oído
 
-
-float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency , char* fileName){
-  
+float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency , char* fileName, bool channel){
+    
     unsigned long previousFrec = 0;        // will store last time LED was updated
     unsigned long previousBasal = 0;
     gain = 0;
     sgtl5000_1.muteHeadphone();   //Mutea la salida
     startRecording(fileName);             //Empieza a grabar
-    sine1.amplitude(0);           //Establece la amplitud de la senoidal 
-    sine1.frequency(frequency);   //Establece la frecuencia de la senoidal 
+    //sineLeft.amplitude(0);           //Establece la amplitud de la senoidal 
+    SineAmplitude(channel , 0);
+    SineFrequency(channel,frequency);
+    //sineLeft.frequency(frequency);   //Establece la frecuencia de la senoidal 
     sgtl5000_1.volume(0);      //Declara la ganacia de la salida
     
 
@@ -147,9 +149,7 @@ float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, i
 if(millis() - previousFrec >= frecTime && basal == 0){   //Si ha pasado el tiempo del pulso 
 Serial.println(millis());
 sgtl5000_1.muteHeadphone();   //Mutea la salida
-sine1.amplitude(0);
-gain = gain + deltaG;         //Incrementa la gananacia
-sgtl5000_1.volume(gain);      //Declara la nueva ganancia
+SineAmplitude(channel ,0);
 previousBasal = millis();  //El tiempo basal empieza a contar ahora
 Serial.println("FrecEnd");
 //Serial.println(gain);
@@ -158,25 +158,29 @@ basal = 1;
 }
  
 if(start == 1 || (millis() - previousBasal >= basalTime && basal == 1) ){  //Si ha pasado el tiempo basal  
-basal = 0;
-sgtl5000_1.unmuteHeadphone();  //Desmutea la salida
-sine1.amplitude(1);
-previousFrec = millis();    //El tiempo del puslo empieza a contar ahora
-Serial.println("BasalEnd");
-Serial.println(millis());
-start = 0;
+  basal = 0;
+  gain = gain + deltaG;         //Incrementa la gananacia
+  sgtl5000_1.volume(gain);      //Declara la nueva ganancia
+  if(gain >= 0.9){
+    stopRecording();
+    break;
+  }
+  sgtl5000_1.unmuteHeadphone();  //Desmutea la salida
+  SineAmplitude(channel ,1);
+  previousFrec = millis();    //El tiempo del puslo empieza a contar ahora
+  
+  Serial.println("BasalEnd");
+  Serial.println(millis());
+  start = 0;
 }
 continueRecording();  //Mientras sigue grabando
-if(gain >= 0.9){
-state = 0;
-stopRecording();
-pulseState = 1;
-}}
+}
 sgtl5000_1.muteHeadphone();
+SineAmplitude(channel,0);
 return gain;
 }
 
-void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, float frequency){
+void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, float frequency , bool channel){
   Serial.println("Im'in");
   Serial.println(millis());
 unsigned long firstTime = millis();
@@ -190,8 +194,8 @@ while (state_2 == 1)
   unsigned long currentTime = millis();
 
   if(currentTime - firstTime >= ecoTime && eco == 1){
-    sine1.amplitude(1);
-    sine1.frequency(frequency);
+    SineAmplitude(channel ,1);
+    SineFrequency(channel, frequency);
     sgtl5000_1.volume(gain);
     sgtl5000_1.unmuteHeadphone();
     pulseStart = millis();
@@ -200,7 +204,7 @@ while (state_2 == 1)
       Serial.println(millis());
   }
   if(currentTime - pulseStart >= pulseTime && eco == 0){
-    sine1.amplitude(0);
+    SineAmplitude(channel ,0);
     sgtl5000_1.muteHeadphone();
     ecoStart = millis();
     eco = 2;
@@ -220,10 +224,10 @@ while (state_2 == 1)
 
 }
 
-void frecSweep(bool speaker,int nFrec){
+void frecSweep(bool channel,int nFrec){
   int frequency;
   char name[30];
-  for(int i = 0; i <= nFrec; i++){
+  for(int i = 0; i <= nFrec -1; i++){
 
     switch (i)
     {
@@ -262,26 +266,57 @@ void frecSweep(bool speaker,int nFrec){
       break;
     }
   Serial.println(frequency);
-  String fileName = createFile(speaker, frequency);
+  String fileName = createFile(channel, frequency);
   fileName.toCharArray(name,fileName.length()+1);
   Serial.println(name);
-  float audible = pulseTrain( 0.1, basalT, frecT, frequency ,name);
+  float audible = pulseTrain( 0.1, basalT, frecT, frequency ,name, channel);
+  if(audible < 0.9){
   Serial.print("Gain: ");
   Serial.println(audible);
-  rebote(audible, ecoT, pulseT, secondEcoT, frequency);
+  rebote(audible, ecoT, pulseT, secondEcoT, frequency, channel);
+  }else{
+    Serial.println("No response for this frequency" );
+  }
   }
   Serial.println("The END");
 }
 
-String createFile(bool speaker, int frec){
-  String channel = "0";
-  if (speaker  == 0)
-  channel = "R";
+String createFile(bool channel, int frec){
+  String speaker = "0";
+  if (channel  == 0)    
+  speaker = "L";
     else 
-  channel = "L";
+  speaker = "R";
 
-  String mergedTopic = String("RECORD_") + channel + String("_") + String(frec) + String(".RAW") ;
+  String mergedTopic = String("RECORD_") + speaker + String("_") + String(frec) + String(".RAW") ;
   
   return mergedTopic;
 }
 
+
+void SineAmplitude(bool channel, float state ){
+if(channel == 1){
+  sineLeft.amplitude(state);
+}else{
+  sineRight.amplitude(state);
+}}
+
+
+
+void SineFrequency(bool channel, int frec ){
+if(channel == 1){
+  sineLeft.frequency(frec);
+  sineRight.frequency(0);
+}else{
+  sineRight.frequency(frec);
+  sineLeft.frequency(0);
+}}
+
+
+void startCycle(int nFrec){
+  bool channel = 0;
+  frecSweep(channel,nFrec);
+  channel = 1;
+  frecSweep(channel,nFrec);
+
+}

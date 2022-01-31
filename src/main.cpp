@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Mic.h>
+#include <AudioTeensy.h>
 
 // Remember which mode we're doing
 int mode = -2;  // 0=stopped, 1=recording, 2=playing
@@ -21,7 +21,8 @@ void setup() {
 Serial.begin(115200);
 attachInterrupt(digitalPinToInterrupt(Button_1), ISR, RISING);
 attachInterrupt(digitalPinToInterrupt(Button_2), ISR_2, RISING);
-
+//SineAmplitude(0,1);
+//SineFrequency(0,1000);
 //float audible = pulseTrain( 0.1, 1000, 1000, 1000);
 
 
@@ -29,7 +30,7 @@ attachInterrupt(digitalPinToInterrupt(Button_2), ISR_2, RISING);
 
 void loop() {
 if(pulseState == 0){
-frecSweep(1,2);
+startCycle(3);
 }}
 
 
