@@ -36,11 +36,11 @@
         void setUpSD();
         void startRecording(char* name);
         void continueRecording();
-        void stopRecording();
+        void stopRecording(char* name);
 
 
         float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency, char* fileName, bool channel);
-        void rebote(float gain, float ecoTime, float pulseTime,float secondEcoTime, float frequency, bool channel);
+        void rebote(float gain, float ecoTime, float pulseTime,float secondEcoTime, float frequency, bool channel, char* fileName);
         void frecSweep(bool channel,int nFrec);
 
         String createFile(bool channel, int frec);
@@ -48,6 +48,7 @@
         void SineFrequency(bool channel, int frec);
         void startCycle(int nFrec);
 
+        
         extern int mode;
         extern bool state;
         extern bool pulseState;

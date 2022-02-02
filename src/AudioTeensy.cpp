@@ -34,7 +34,7 @@ void setupAudio(){
 
 sgtl5000_1.enable();
 sgtl5000_1.dacVolume(1);
-sgtl5000_1.volume(0.8); 
+sgtl5000_1.volume(0); 
 sgtl5000_1.inputSelect(myInput);
 sgtl5000_1.micGain(0);
 sgtl5000_1.adcHighPassFilterDisable();
@@ -42,6 +42,8 @@ sgtl5000_1.muteHeadphone();
 sgtl5000_1.muteLineout();
 sineLeft.amplitude(0);
 sineRight.amplitude(0);
+sineLeft.frequency(0);
+sineRight.frequency(0);
 //sgtl5000_1.lineOutLevel(13);
 AudioMemory(200); 
 
@@ -88,6 +90,7 @@ void continueRecording() {
     queue1.freeBuffer();
     // write all 512 bytes to the SD card
     //elapsedMicros usec = 0;
+    //Serial6.write(buffer,512);
     frec.write(buffer, 512);
     // Uncomment these lines to see how long SD writes
     // are taking.  A pair of audio blocks arrives every
@@ -104,7 +107,7 @@ void continueRecording() {
   }
 }
 
-void stopRecording() {
+void stopRecording(char* name) {
   sgtl5000_1.muteHeadphone();
   Serial.println("stopRecording");
   queue1.end();
@@ -114,10 +117,25 @@ void stopRecording() {
       queue1.freeBuffer();
     }
     frec.close();
+    
+    // Abrir fichero y mostrar el resultado
+  frec = SD.open(name); 
+  if(frec){
+    Serial.println(frec.size());
+    while (frec.available())
+   {
+   Serial6.write(frec.read());
+   //Serial.println(frec.position());
+    }
   }
+  else 
+  {
+    Serial.println(F("Error al abrir el archivo"));
+  }
+  frec.close();
   mode = -2;
   state = 0;
-}
+}}
 
 
 
@@ -162,7 +180,7 @@ if(start == 1 || (millis() - previousBasal >= basalTime && basal == 1) ){  //Si 
   gain = gain + deltaG;         //Incrementa la gananacia
   sgtl5000_1.volume(gain);      //Declara la nueva ganancia
   if(gain >= 0.9){
-    stopRecording();
+    stopRecording(fileName);
     break;
   }
   sgtl5000_1.unmuteHeadphone();  //Desmutea la salida
@@ -180,7 +198,7 @@ SineAmplitude(channel,0);
 return gain;
 }
 
-void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, float frequency , bool channel){
+void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, float frequency , bool channel,char* fileName){
   Serial.println("Im'in");
   Serial.println(millis());
 unsigned long firstTime = millis();
@@ -215,7 +233,7 @@ while (state_2 == 1)
    continueRecording();
   if(currentTime - ecoStart >= secondEcoTime && eco == 2){
     state_2 = 0;
-    stopRecording();
+    stopRecording(fileName);
     pulseState = 1;
   }
 }
@@ -273,7 +291,7 @@ void frecSweep(bool channel,int nFrec){
   if(audible < 0.9){
   Serial.print("Gain: ");
   Serial.println(audible);
-  rebote(audible, ecoT, pulseT, secondEcoT, frequency, channel);
+  rebote(audible, ecoT, pulseT, secondEcoT, frequency, channel, name );
   }else{
     Serial.println("No response for this frequency" );
   }
@@ -306,10 +324,10 @@ if(channel == 1){
 void SineFrequency(bool channel, int frec ){
 if(channel == 1){
   sineLeft.frequency(frec);
-  sineRight.frequency(0);
+
 }else{
   sineRight.frequency(frec);
-  sineLeft.frequency(0);
+ 
 }}
 
 
