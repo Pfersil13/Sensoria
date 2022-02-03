@@ -20,15 +20,15 @@ void setup() {
   pinMode(Button_1, INPUT_PULLUP);
   pinMode(Button_2, INPUT_PULLUP);
 Serial.begin(115200);
-Serial6.begin(9600);
+Serial6.begin(115200, SERIAL_8N1 );
 attachInterrupt(digitalPinToInterrupt(Button_1), ISR, RISING);
 attachInterrupt(digitalPinToInterrupt(Button_2), ISR_2, RISING);
 //SineAmplitude(1,1);
 //SineFrequency(1,1000);
 
 //float audible = pulseTrain( 0.1, 1000, 1000, 1000);
-
-
+//char name[30] = "Prueba_Bluetooth.RAW";
+//sendBle(name);
 }
 
 void loop() {

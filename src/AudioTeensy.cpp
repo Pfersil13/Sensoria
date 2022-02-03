@@ -124,7 +124,10 @@ void stopRecording(char* name) {
     Serial.println(frec.size());
     while (frec.available())
    {
-   Serial6.write(frec.read());
+   byte a = frec.read();
+   //Serial.print(a);
+   Serial6.write(a);
+   Serial6.flush();
    //Serial.println(frec.position());
     }
   }
@@ -334,7 +337,32 @@ if(channel == 1){
 void startCycle(int nFrec){
   bool channel = 0;
   frecSweep(channel,nFrec);
-  channel = 1;
-  frecSweep(channel,nFrec);
+  //channel = 1;
+  //frecSweep(channel,nFrec);
 
+}
+
+void sendBle(char* name){
+
+    frec = SD.open(name); 
+  if(frec){
+    Serial.println(frec.size());
+    while (frec.available())
+   {
+   //char letter = frec.read();
+   byte a = frec.read();
+   //Serial.print(a);
+   Serial6.write(a);
+   Serial6.flush();
+    //Serial.write(letter);
+    //Serial.flush();
+    //delay(100);
+   //Serial.println(frec.position());
+    }
+  }
+  else 
+  {
+    Serial.println(F("Error al abrir el archivo"));
+  }
+  frec.close();
 }

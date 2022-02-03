@@ -48,7 +48,8 @@
         void SineFrequency(bool channel, int frec);
         void startCycle(int nFrec);
 
-        
+        void sendBle(char* name);
+
         extern int mode;
         extern bool state;
         extern bool pulseState;
