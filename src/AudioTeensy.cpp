@@ -42,7 +42,7 @@ sgtl5000_1.enable();  //Enable codec
 sgtl5000_1.dacVolume(1);  //Dac volume 1 -> 0 dB
 sgtl5000_1.volume(0);     //Headphones volume 0
 sgtl5000_1.inputSelect(myInput);  //Select mic input
-sgtl5000_1.micGain(5);       //Select mic gain (dB)
+sgtl5000_1.micGain(0);       //Select mic gain (dB)
 sgtl5000_1.adcHighPassFilterDisable();    //Disabled because  it introduce a lot fo noise
 sgtl5000_1.muteHeadphone();   
 sgtl5000_1.muteLineout();
@@ -61,7 +61,7 @@ float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, i
     
     unsigned long previousFrec = 0;        // will store last time frec was triggered
     unsigned long previousBasal = 0;      // will store last time frec was updated
-    gain = 0;
+    gain = -deltaG;
     sgtl5000_1.muteHeadphone();   //Mutea la salida
     startRecording(fileName);             //Empieza a grabar          
     SineAmplitude(channel , 0);     //Establece la amplitud de la senoidal 
@@ -91,6 +91,7 @@ float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, i
           break;
         }
         sgtl5000_1.unmuteHeadphone();  //Desmutea la salida
+        Serial.println(gain);
         SineAmplitude(channel ,1);
         previousFrec = millis();    //El tiempo del puslo empieza a contar ahora
         Serial.println("BasalEnd");
@@ -106,12 +107,15 @@ float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, i
 }
 
 void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, float frequency , bool channel,char* fileName){
+  
   Serial.println("Im'in");
   Serial.println(millis());
   unsigned long firstTime = millis();
   unsigned long pulseStart = 0;
   unsigned long ecoStart = 0;
+  sgtl5000_1.volume(gain);
   state_2 = 1;
+  
   int eco = 1;
   while (state_2 == 1)
   {
@@ -120,7 +124,7 @@ void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, flo
     if(currentTime - firstTime >= ecoTime && eco == 1){
       SineAmplitude(channel ,1);
       SineFrequency(channel, frequency);
-      sgtl5000_1.volume(gain);
+      Serial.println(gain);
       sgtl5000_1.unmuteHeadphone();
       pulseStart = millis();
       eco = 0;
