@@ -8,6 +8,8 @@
         #define SDCARD_MOSI_PIN  11  
         #define SDCARD_SCK_PIN   13  
         
+        //This frecuecuncis are in order to variate frecuency in a non linear way
+        //Select until with frecuency (nFrec) you want to test. 
         #define Frec_1  1000
         #define Frec_2  5000
         #define Frec_3  10000
@@ -19,12 +21,12 @@
         #define Frec_9  9000
         #define Frec_10 10000
 
-        #define basalT   1000
-        #define frecT    1000
+        #define basalT   1000       //Define basal lenght
+        #define frecT    1000       //Define pulse lenght
 
-        #define ecoT 3000
-        #define pulseT 500
-        #define secondEcoT   5000
+        #define ecoT 3000       //Define first eco lenght
+        #define pulseT 500      //Define final pulse lenght
+        #define secondEcoT   5000   //Define second eco lenght
 
         // Use these with the Teensy Audio Shield
         //#define SDCARD_CS_PIN    10
@@ -33,22 +35,9 @@
 
         
         void setupAudio();
-        void setUpSD();
-        void startRecording(char* name);
-        void continueRecording();
-        void stopRecording(char* name);
-
-
-        float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency, char* fileName, bool channel);
-        void rebote(float gain, float ecoTime, float pulseTime,float secondEcoTime, float frequency, bool channel, char* fileName);
-        void frecSweep(bool channel,int nFrec);
-
-        String createFile(bool channel, int frec);
         void SineAmplitude(bool channel, float state );
         void SineFrequency(bool channel, int frec);
         void startCycle(int nFrec);
-
-        void sendBle(char* name);
 
         extern int mode;
         extern bool state;
