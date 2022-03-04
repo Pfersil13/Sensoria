@@ -19,7 +19,7 @@
         //#define SDCARD_SCK_PIN   14
         
         void setUpSD();
-        void startRecording(char* name);
+        void startRecording(char* name, char* noise);
         void continueRecording();
         void stopRecording(char* name);
         void sendBle(char* name);

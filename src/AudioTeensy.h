@@ -10,22 +10,23 @@
         
         //This frecuecuncis are in order to variate frecuency in a non linear way
         //Select until with frecuency (nFrec) you want to test. 
-        #define Frec_1  1000
-        #define Frec_2  5000
-        #define Frec_3  10000
-        #define Frec_4  15000
-        #define Frec_5  5000
-        #define Frec_6  6000
-        #define Frec_7  7000
-        #define Frec_8  8000
-        #define Frec_9  9000
-        #define Frec_10 10000
+        #define Frec_1  250
+        #define Frec_2  500
+        #define Frec_3  1000
+        #define Frec_4  2000
+        #define Frec_5  4000
+        #define Frec_6  7000
+        #define Frec_7  10000
+        #define Frec_8  13000
+        #define Frec_9  15000
+        #define Frec_10 17000
 
+        #define Incremento_Gain 0.05
         #define basalT   1000       //Define basal lenght
-        #define frecT    1000       //Define pulse lenght
+        #define frecT    500       //Define pulse lenght
 
         #define ecoT 3000       //Define first eco lenght
-        #define pulseT 500      //Define final pulse lenght
+        #define pulseT 100      //Define final pulse lenght
         #define secondEcoT   5000   //Define second eco lenght
 
         // Use these with the Teensy Audio Shield

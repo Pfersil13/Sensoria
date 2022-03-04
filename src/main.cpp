@@ -23,7 +23,7 @@ void setup() {
   pinMode(Button_2, INPUT_PULLUP);
 
   Serial.begin(115200);
-  Serial6.begin(115200 , SERIAL_8N1 );  //Serial for bluetooth
+  Serial6.begin(460800 , SERIAL_8N1 );  //Serial for bluetooth
 
   //Interruptions
   attachInterrupt(digitalPinToInterrupt(Button_1), StartCycle_ISR, RISING); 
@@ -33,14 +33,16 @@ void setup() {
   //SineFrequency(1,1000);
 
   //float audible = pulseTrain( 0.1, 1000, 1000, 1000);
-  //char name[30] = "PruebaBle.RAW";
+  //char name[30] = "PruebaBle_T.RAW";
   //sendBle(name);
 }
 
 void loop() {
 if(pulseState == 0){
-startCycle(1);
+startCycle(10);
 }
+  pulseState = 1;
+
 }
 
 

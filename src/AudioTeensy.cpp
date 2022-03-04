@@ -7,32 +7,36 @@
 #include "AudioIn.h"
 
 // which input on the audio shield will be used?
-//const int myInput = AUDIO_INPUT_LINEIN;
-const int myInput = AUDIO_INPUT_MIC;
+const int myInput = AUDIO_INPUT_LINEIN;
+//const int myInput = AUDIO_INPUT_MIC;
 
 
 float gain = 0;
 bool basal = 0;
 bool state_2 = 0;
     
+
 // GUItool: begin automatically generated code
+AudioInputI2S            i2s2;           //xy=246.20001220703125,265.20001220703125
 AudioSynthWaveformSine   sineLeft;          //xy=247.20001220703125,150.1999969482422
-AudioSynthWaveformSine   sineRight;          //xy=248.1999969482422,191.1999969482422
-AudioInputI2S            i2s2;           //xy=249.1999969482422,245.1999969482422
-AudioRecordQueue         queue1;         //xy=414.1999969482422,243.1999969482422
+AudioSynthWaveformSine   sineRight;          //xy=249.20001220703125,191.1999969482422
+AudioFilterStateVariable filter1;        //xy=406.20001220703125,250.1999969482422
 AudioOutputI2S           i2s1;           //xy=426.20001220703125,156.1999969482422
-AudioConnection          patchCord1(sineLeft, 0, i2s1, 0);
-AudioConnection          patchCord2(sineRight, 0, i2s1, 1);
-AudioConnection          patchCord3(i2s2, 1, queue1, 0);
-AudioControlSGTL5000     sgtl5000_1;     //xy=288.1999969482422,384.1999969482422
+AudioRecordQueue         queue1;         //xy=564.2000122070312,263.20001220703125
+AudioRecordQueue         queue2;  //xy=565.2000122070312,309.79998779296875
+AudioConnection          patchCord1(i2s2, 0, queue1, 0);
+AudioConnection          patchCord2(i2s2, 1, queue2, 0);
+AudioConnection          patchCord3(sineLeft, 0, i2s1, 0);
+AudioConnection          patchCord4(sineRight, 0, i2s1, 1);
+//AudioConnection          patchCord5(filter1, 2, queue1, 0);
+AudioControlSGTL5000     sgtl5000_1;     //xy=255.1999969482422,351.20001220703125
 // GUItool: end automatically generated code
 
-
-float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency, char* fileName, bool channel);
+float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency, char* fileName,char* noiseName, bool channel);
 void rebote(float gain, float ecoTime, float pulseTime,float secondEcoTime, float frequency, bool channel, char* fileName);
 void frecSweep(bool channel,int nFrec);
 
-String createFile(bool channel, int frec);
+void createFile(bool channel, int frec , String *fileName, String *ambientNoise);
 
 
 //Function for setting up audio library
@@ -41,15 +45,22 @@ void setupAudio(){
 sgtl5000_1.enable();  //Enable codec
 sgtl5000_1.dacVolume(1);  //Dac volume 1 -> 0 dB
 sgtl5000_1.volume(0);     //Headphones volume 0
-sgtl5000_1.inputSelect(myInput);  //Select mic input
-sgtl5000_1.micGain(0);       //Select mic gain (dB)
-sgtl5000_1.adcHighPassFilterDisable();    //Disabled because  it introduce a lot fo noise
+sgtl5000_1.inputSelect(myInput);  //Select audio input
+//sgtl5000_1.micGain(45);       //Select mic gain (dB)
+//sgtl5000_1.adcHighPassFilterDisable();    //Disabled because  it introduce a lot fo noise
 sgtl5000_1.muteHeadphone();   
 sgtl5000_1.muteLineout();
 sineLeft.amplitude(0);
 sineRight.amplitude(0);
 sineLeft.frequency(0);
 sineRight.frequency(0);
+//filter1.frequency(100);
+//filter1.resonance(0.5);
+sgtl5000_1.lineInLevel(0,0);      //Line level 3.12 V p-p
+//biquad1.setHighpass(1,200,0.7);
+//biquad1.setHighpass(2,200,0.7);
+//biquad1.setNotch(1,100,0.7);
+//biquad1.setNotch(2,100,0.7);
 //sgtl5000_1.lineOutLevel(13);
 AudioMemory(200); 
 
@@ -57,13 +68,13 @@ AudioMemory(200);
 
 //Esta función se encarga de generar el tren de pulsos para determinar la ganancia del oído
 
-float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency , char* fileName, bool channel){
+float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, int frequency , char* fileName, char* noiseName,bool channel){
     
     unsigned long previousFrec = 0;        // will store last time frec was triggered
     unsigned long previousBasal = 0;      // will store last time frec was updated
     gain = -deltaG;
     sgtl5000_1.muteHeadphone();   //Mutea la salida
-    startRecording(fileName);             //Empieza a grabar          
+    startRecording(fileName, noiseName);             //Empieza a grabar          
     SineAmplitude(channel , 0);     //Establece la amplitud de la senoidal 
     SineFrequency(channel,frequency);   //Establece la frecuencia de la senoidal 
     sgtl5000_1.volume(0);      //Declara la ganacia de la salida
@@ -75,8 +86,8 @@ float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, i
     {         
     //unsigned long currentTime = millis();
       if(millis() - previousFrec >= frecTime && basal == 0){   //Si ha pasado el tiempo del pulso 
-        sgtl5000_1.muteHeadphone();   //Mutea la salida
         SineAmplitude(channel ,0);
+        sgtl5000_1.muteHeadphone();   //Mutea la salida
         previousBasal = millis();  //El tiempo basal empieza a contar ahora
         Serial.println("FrecEnd");
         basal = 1;
@@ -88,6 +99,9 @@ float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, i
         sgtl5000_1.volume(gain);      //Declara la nueva ganancia
         if(gain >= 0.9){
           stopRecording(fileName);
+          SineAmplitude(channel ,0);
+          sgtl5000_1.muteHeadphone();   //Mutea la salida
+          
           break;
         }
         sgtl5000_1.unmuteHeadphone();  //Desmutea la salida
@@ -101,10 +115,12 @@ float pulseTrain( float deltaG, unsigned int basalTime, unsigned int frecTime, i
     continueRecording();  //Mientras sigue grabando
 
     }
-    sgtl5000_1.muteHeadphone();
-    SineAmplitude(channel,0);
+    SineAmplitude(channel ,0);
+    sgtl5000_1.muteHeadphone();   //Mutea la salida
   return gain;
 }
+
+//Esta función se encarga de generar el último pulso 
 
 void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, float frequency , bool channel,char* fileName){
   
@@ -133,7 +149,7 @@ void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, flo
       }
     if(currentTime - pulseStart >= pulseTime && eco == 0){
       SineAmplitude(channel ,0);
-      sgtl5000_1.muteHeadphone();
+      sgtl5000_1.muteHeadphone();   //Mutea la salida
       ecoStart = millis();
       eco = 2;
       Serial.println("adios, pulso");
@@ -150,9 +166,12 @@ void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, flo
     }
 }
 
+
+//
+
 void frecSweep(bool channel,int nFrec){
   int frequency;
-  char name[30];
+  char name[30], ambientNoiseName[30];
   for(int i = 0; i <= nFrec -1; i++){
 
     switch (i)
@@ -192,10 +211,13 @@ void frecSweep(bool channel,int nFrec){
       break;
     }
   Serial.println(frequency);
-  String fileName = createFile(channel, frequency);
+  String fileName,ambientName;
+  createFile(channel, frequency , &fileName, &ambientName);  //Creates a filename based on channel y frecuency
   fileName.toCharArray(name,fileName.length()+1);
+  ambientName.toCharArray(ambientNoiseName,ambientName.length()+1);
   Serial.println(name);
-  float audible = pulseTrain( 0.1, basalT, frecT, frequency ,name, channel);
+  Serial.println(ambientNoiseName);
+  float audible = pulseTrain(Incremento_Gain, basalT, frecT, frequency ,name,ambientNoiseName, channel);
   if(audible < 0.9){
   Serial.print("Gain: ");
   Serial.println(audible);
@@ -207,16 +229,19 @@ void frecSweep(bool channel,int nFrec){
   Serial.println("The END");
 }
 
-String createFile(bool channel, int frec){
-  String speaker = "0";
-  if (channel  == 0)    
-  speaker = "L";
-    else 
-  speaker = "R";
 
-  String mergedTopic = String("RECORD_") + speaker + String("_") + String(frec) + String(".RAW") ;
-  
-  return mergedTopic;
+//Just a function in order to create the new names for files to be stored in sd. 
+
+void createFile(bool channel, int frec , String *fileName, String *ambientNoise){
+  String speaker = "0";
+  if (channel  == 0){  
+  speaker = "L";
+    }else{ 
+  speaker = "R";
+    }
+  *fileName = String("RECORD_") + speaker + String("_") + String(frec) + String(".RAW") ;
+  *ambientNoise = String("AmbientNoise_") + speaker + String("_") + String(frec) + String(".RAW") ;
+
 }
 
 
@@ -240,7 +265,7 @@ if(channel == 1){
 
 
 void startCycle(int nFrec){
-  bool channel = 0;
+  bool channel = 1;
   frecSweep(channel,nFrec);
   //channel = 1;
   //frecSweep(channel,nFrec);
