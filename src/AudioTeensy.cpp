@@ -7,8 +7,8 @@
 #include "AudioIn.h"
 
 // which input on the audio shield will be used?
-const int myInput = AUDIO_INPUT_LINEIN;
-//const int myInput = AUDIO_INPUT_MIC;
+//const int myInput = AUDIO_INPUT_LINEIN;
+const int myInput = AUDIO_INPUT_MIC;
 
 
 float gain = 0;
@@ -24,11 +24,11 @@ AudioFilterStateVariable filter1;        //xy=406.20001220703125,250.19999694824
 AudioOutputI2S           i2s1;           //xy=426.20001220703125,156.1999969482422
 AudioRecordQueue         queue1;         //xy=564.2000122070312,263.20001220703125
 AudioRecordQueue         queue2;  //xy=565.2000122070312,309.79998779296875
-AudioConnection          patchCord1(i2s2, 0, queue1, 0);
+AudioConnection          patchCord1(i2s2, 0, filter1, 0);
 AudioConnection          patchCord2(i2s2, 1, queue2, 0);
 AudioConnection          patchCord3(sineLeft, 0, i2s1, 0);
 AudioConnection          patchCord4(sineRight, 0, i2s1, 1);
-//AudioConnection          patchCord5(filter1, 2, queue1, 0);
+AudioConnection          patchCord5(filter1, 2, queue1, 0);
 AudioControlSGTL5000     sgtl5000_1;     //xy=255.1999969482422,351.20001220703125
 // GUItool: end automatically generated code
 
@@ -46,17 +46,17 @@ sgtl5000_1.enable();  //Enable codec
 sgtl5000_1.dacVolume(1);  //Dac volume 1 -> 0 dB
 sgtl5000_1.volume(0);     //Headphones volume 0
 sgtl5000_1.inputSelect(myInput);  //Select audio input
-//sgtl5000_1.micGain(45);       //Select mic gain (dB)
-//sgtl5000_1.adcHighPassFilterDisable();    //Disabled because  it introduce a lot fo noise
+sgtl5000_1.micGain(30);       //Select mic gain (dB)
+sgtl5000_1.adcHighPassFilterDisable();    //Disabled because  it introduce a lot fo noise
 sgtl5000_1.muteHeadphone();   
 sgtl5000_1.muteLineout();
 sineLeft.amplitude(0);
 sineRight.amplitude(0);
 sineLeft.frequency(0);
 sineRight.frequency(0);
-//filter1.frequency(100);
-//filter1.resonance(0.5);
-sgtl5000_1.lineInLevel(0,0);      //Line level 3.12 V p-p
+filter1.frequency(200);
+filter1.resonance(0.7);
+sgtl5000_1.lineInLevel(31);      //Line level 0 = 3.12 V p-p
 //biquad1.setHighpass(1,200,0.7);
 //biquad1.setHighpass(2,200,0.7);
 //biquad1.setNotch(1,100,0.7);
@@ -167,7 +167,7 @@ void rebote(float gain, float ecoTime, float pulseTime, float secondEcoTime, flo
 }
 
 
-//
+//Function to start de freucency sweep in one channel
 
 void frecSweep(bool channel,int nFrec){
   int frequency;
@@ -211,13 +211,19 @@ void frecSweep(bool channel,int nFrec){
       break;
     }
   Serial.println(frequency);
+
+  //File name creation stuff
   String fileName,ambientName;
   createFile(channel, frequency , &fileName, &ambientName);  //Creates a filename based on channel y frecuency
   fileName.toCharArray(name,fileName.length()+1);
   ambientName.toCharArray(ambientNoiseName,ambientName.length()+1);
   Serial.println(name);
   Serial.println(ambientNoiseName);
+
+  //Start pulseTrain
   float audible = pulseTrain(Incremento_Gain, basalT, frecT, frequency ,name,ambientNoiseName, channel);
+  
+  //If was an audible frecuency
   if(audible < 0.9){
   Serial.print("Gain: ");
   Serial.println(audible);

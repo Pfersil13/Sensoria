@@ -22,11 +22,11 @@
         #define Frec_10 17000
 
         #define Incremento_Gain 0.05
-        #define basalT   1000       //Define basal lenght
-        #define frecT    500       //Define pulse lenght
+        #define basalT   500       //Define basal lenght
+        #define frecT    200       //Define pulse lenght
 
         #define ecoT 3000       //Define first eco lenght
-        #define pulseT 100      //Define final pulse lenght
+        #define pulseT 50      //Define final pulse lenght
         #define secondEcoT   5000   //Define second eco lenght
 
         // Use these with the Teensy Audio Shield
